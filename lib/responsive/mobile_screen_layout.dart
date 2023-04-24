@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:project1/models/user.dart' as model;
 import '../utils/colors.dart';
 import '../utils/global_variable.dart';
+import '../widgets/bottombar_item.dart';
 
 
 class MobileScreenLayout extends StatefulWidget {
@@ -39,6 +40,8 @@ class _MobileScreenLayoutState extends State<MobileScreenLayout> {
     pageController.jumpToPage(page);
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,51 +51,81 @@ class _MobileScreenLayoutState extends State<MobileScreenLayout> {
         onPageChanged: onPageChanged,
         children: homeScreenItems,
       ),
-      bottomNavigationBar: CupertinoTabBar(
-        backgroundColor: mobileBackgroundColor,
-        items: <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.home,
-              color: (_page == 0) ? primaryColor : secondaryColor,
-            ),
-            label: '',
-            backgroundColor: primaryColor,
+      bottomNavigationBar: getBottomBar(),
+
+    );
+  }
+
+
+  Widget getBottomBar() {
+    return Container(
+      height: 55,
+      width: double.infinity,
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(25),
+              topRight: Radius.circular(25)
           ),
-          BottomNavigationBarItem(
-              icon: Icon(
-                Icons.map_rounded,
-                color: (_page == 1) ? primaryColor : secondaryColor,
-              ),
-              label: '',
-              backgroundColor: primaryColor),
-          BottomNavigationBarItem(
-              icon: Icon(
-                Icons.add_circle,
-                color: (_page == 2) ? primaryColor : secondaryColor,
-              ),
-              label: '',
-              backgroundColor: primaryColor),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.mail,
-              color: (_page == 3) ? primaryColor : secondaryColor,
-            ),
-            label: '',
-            backgroundColor: primaryColor,
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.person,
-              color: (_page == 4) ? primaryColor : secondaryColor,
-            ),
-            label: '',
-            backgroundColor: primaryColor,
-          ),
-        ],
-        onTap: navigationTapped,
-        currentIndex: _page,
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black87.withOpacity(0.1),
+                blurRadius: .5,
+                spreadRadius: .5,
+                offset: Offset(0, 1)
+            )
+          ]
+      ),
+      child: Padding(
+          padding: const EdgeInsets.only(left: 25, right: 25, top: 15),
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                BottomBarItem(Icons.home_rounded, "", isActive: _page == 0, activeColor: Colors.black,
+                  onTap: () {
+                    setState(() {
+                      _page = 0;
+                    });
+                    pageController.jumpToPage(_page);
+                  },
+                ),
+                BottomBarItem(Icons.play_circle, "", isActive: _page == 1, activeColor: Colors.black,
+                  onTap: () {
+                    setState(() {
+                      _page = 1;
+                    });
+                    pageController.jumpToPage(_page);
+                    },
+                ),
+                BottomBarItem(Icons.add_circle_rounded, "", isActive: _page == 2, activeColor: Colors.black,
+                  onTap: () {
+                    setState(() {
+                      _page = 2;
+                    });
+                    pageController.jumpToPage(_page);
+                  },
+                ),
+                BottomBarItem(Icons.hourglass_bottom, "", isActive: _page == 3, activeColor: Colors.black,
+                  onTap: () {
+                    setState(() {
+                      _page = 3;
+                    });
+                    pageController.jumpToPage(_page);
+                  },
+                ),
+                BottomBarItem(Icons.person_rounded, "", isActive: _page == 4, activeColor: Colors.black,
+                  onTap: () {
+                    navigationTapped;
+                    setState(() {
+                      _page = 4;
+                    });
+                    pageController.jumpToPage(_page);
+                  },
+                ),
+              ]
+          )
       ),
     );
   }
+
 }

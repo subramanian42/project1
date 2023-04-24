@@ -10,6 +10,7 @@ import '../helper/enum.dart';
 import '../models/user.dart';
 import '../resources/auth_methods.dart';
 import '../utils/utils.dart';
+import '../widgets/appWidgets.dart';
 import '../widgets/customFlatButton.dart';
 import '../widgets/newWidget/customLoader.dart';
 
@@ -24,7 +25,7 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  late TextEditingController _nameController;
+  late TextEditingController _usernameController;
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
   late TextEditingController _confirmController;
@@ -33,7 +34,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   void initState() {
     loader = CustomLoader();
-    _nameController = TextEditingController();
+    _usernameController = TextEditingController();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
     _confirmController = TextEditingController();
@@ -44,88 +45,101 @@ class _SignupScreenState extends State<SignupScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _nameController.dispose();
+    _usernameController.dispose();
     _confirmController.dispose();
     super.dispose();
   }
 
   Widget _body(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height, //context.height - 88,
-      padding: const EdgeInsets.symmetric(horizontal: 30),
-      child: Form(
-        key: _formKey,
+    ThemeData theme = Theme.of(context);
+    return SafeArea(
+      child: Container(
+        padding: EdgeInsets.all(50),
+        width: double.infinity,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            _entryField('Name', controller: _nameController),
-            _entryField('Enter email',
-                controller: _emailController, isEmail: true),
-            _entryField('Enter password',
-                controller: _passwordController, isPassword: true),
-            _entryField('Confirm password',
-                controller: _confirmController, isPassword: true),
-            _submitButton(context),
-
-            const Divider(height: 30),
-            const SizedBox(height: 30),
-            // _googleLoginButton(context),
-            // GoogleLoginButton(
-            //   loginCallback: widget.loginCallback,
-            //   loader: loader,
-            // ),
-            const SizedBox(height: 30),
+            const Text(
+              'Create Account',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            SizedBox(height: 5),
+            Text(
+              "Ready to Explore",
+              style: TextStyle(
+                color: Colors.grey[500],
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            SizedBox(height: 50),
+            Input(
+              label: 'Create username',
+              icon: Icons.person,
+              controller: _usernameController,
+            ),
+            SizedBox(height: 15),
+            Input(
+              label: 'Enter email',
+              icon: Icons.mail,
+              controller: _emailController,
+            ),
+            SizedBox(height: 15),
+            Input(
+              label: 'Enter password',
+              icon: Icons.email,
+              controller: _passwordController,
+              obscure: true,
+            ),
+            SizedBox(height: 15),
+            Input(
+              label: 'Confirm password',
+              icon: Icons.lock,
+              controller: _confirmController,
+              obscure: true,
+            ),
+            SizedBox(height: 50),
+            Button(
+              label: 'Sign Up',
+              theme: theme,
+              onPressed: () => _submitForm(context),
+            ),
+            SizedBox(height: 50),
+            Container(
+              width: double.infinity,
+              child: Align(
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text("Already have an account? "),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        'Sign In',
+                        style: TextStyle(
+                          color: theme.primaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
           ],
         ),
       ),
     );
   }
 
-  Widget _entryField(String hint,
-      {required TextEditingController controller,
-        bool isPassword = false,
-        bool isEmail = false}) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: TextField(
-        controller: controller,
-        keyboardType: isEmail ? TextInputType.emailAddress : TextInputType.text,
-        style: const TextStyle(
-          fontStyle: FontStyle.normal,
-          fontWeight: FontWeight.normal,
-        ),
-        obscureText: isPassword,
-        decoration: InputDecoration(
-          hintText: hint,
-          border: InputBorder.none,
-          focusedBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(
-              Radius.circular(30.0),
-            ),
-            borderSide: BorderSide(color: Colors.blue),
-          ),
-          contentPadding:
-          const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-        ),
-      ),
-    );
-  }
 
-  Widget _submitButton(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 35),
-      child: CustomFlatButton(
-        label: "Sign up",
-        onPressed: () => _submitForm(context),
-        borderRadius: 30,
-      ),
-    );
-  }
 
   void _submitForm(BuildContext context) {
     if (_emailController.text.isEmpty) {
@@ -152,11 +166,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     UserModel user = UserModel(
       email: _emailController.text.toLowerCase(),
-      bio: 'Edit profile to update bio',
-      // contact:  _mobileController.text,
-      displayName: _nameController.text,
-      dob: DateTime(1950, DateTime.now().month, DateTime.now().day + 3)
-          .toString(),
+      userName: _usernameController.text ,
       location: 'Somewhere in universe',
       profilePic: Constants.dummyProfilePicList[randomNumber],
       isVerified: false,
@@ -182,14 +192,15 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ThemeData theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Sign Up',
-         // context: context,
-          style: TextStyle(fontSize: 20),
+      appBar:  AppBar(
+        elevation: 0,
+        backgroundColor: theme.backgroundColor,
+        leading: BackButton(
+          color: theme.primaryColor,
+          onPressed: () => Navigator.pop(context),
         ),
-        centerTitle: true,
       ),
       body: SingleChildScrollView(child: _body(context)),
     );

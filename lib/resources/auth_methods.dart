@@ -1,10 +1,12 @@
 import 'dart:async';
-import 'dart:typed_data';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:project1/resources/storage_methods.dart';
-import 'package:project1/models/user.dart' as model;
+import 'package:flutter/services.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:path/path.dart' as path;
 
 import '../helper/enum.dart';
 import '../models/user.dart';
@@ -14,11 +16,12 @@ import '../utils/utils.dart';
 
 class AuthMethods extends ChangeNotifier  {
   AuthStatus authStatus = AuthStatus.NOT_DETERMINED;
-
+  bool isSignInWithGoogle = false;
   User? user;
   late String userId;
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   // List<UserModel> _profileUserModelList;
   UserModel? _userModel;
@@ -66,6 +69,75 @@ class AuthMethods extends ChangeNotifier  {
     }
   }
 
+  /// Create user from `google login`
+  /// If user is new then it create a new user
+  /// If user is old then it just `authenticate` user and return firebase user data
+  Future<User?> handleGoogleSignIn() async {
+    try {
+      /// Record log in firebase kAnalytics about Google login
+      // kAnalytics.logLogin(loginMethod: 'google_login');
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        throw Exception('Google login cancelled by user');
+      }
+      final GoogleSignInAuthentication googleAuth =
+      await googleUser.authentication;
+
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      user = (await _firebaseAuth.signInWithCredential(credential)).user;
+      authStatus = AuthStatus.LOGGED_IN;
+      userId = user!.uid;
+      isSignInWithGoogle = true;
+      createUserFromGoogleSignIn(user!);
+      notifyListeners();
+      return user;
+    } on PlatformException catch (error) {
+      user = null;
+      authStatus = AuthStatus.NOT_LOGGED_IN;
+      cprint(error, errorIn: 'handleGoogleSignIn');
+      return null;
+    } on Exception catch (error) {
+      user = null;
+      authStatus = AuthStatus.NOT_LOGGED_IN;
+      cprint(error, errorIn: 'handleGoogleSignIn');
+      return null;
+    } catch (error) {
+      user = null;
+      authStatus = AuthStatus.NOT_LOGGED_IN;
+      cprint(error, errorIn: 'handleGoogleSignIn');
+      return null;
+    }
+  }
+
+  /// Create user profile from google login
+  void createUserFromGoogleSignIn(User user) {
+    var diff = DateTime.now().difference(user.metadata.creationTime!);
+    // Check if user is new or old
+    // If user is new then add new user to firebase realtime kDatabase
+    if (diff < const Duration(seconds: 15)) {
+      UserModel model = UserModel(
+        bio: 'Edit profile to update bio',
+        dob: DateTime(1950, DateTime.now().month, DateTime.now().day + 3)
+            .toString(),
+        location: 'Somewhere in universe',
+        profilePic: user.photoURL!,
+        displayName: user.displayName!,
+        email: user.email!,
+        key: user.uid,
+        userId: user.uid,
+        contact: user.phoneNumber!,
+        isVerified: user.emailVerified,
+      );
+      createUser(model, newUser: true);
+    } else {
+      cprint('Last login at: ${user.metadata.lastSignInTime}');
+    }
+  }
+
+
   /// Create new user's profile in db
   Future<String?> signUp(UserModel userModel,
       {required BuildContext context, required String password}) async {
@@ -76,8 +148,8 @@ class AuthMethods extends ChangeNotifier  {
         password: password,
       );
       user = result.user;
-     authStatus = AuthStatus.LOGGED_IN;
-     // kAnalytics.logSignUp(signUpMethod: 'register');
+      authStatus = AuthStatus.LOGGED_IN;
+      // kAnalytics.logSignUp(signUpMethod: 'register');
       result.user!.updateDisplayName(
         userModel.displayName,
       );
@@ -102,9 +174,9 @@ class AuthMethods extends ChangeNotifier  {
   void createUser(UserModel user, {bool newUser = false}) {
     if (newUser) {
       // Create username by the combination of name and id
-      user.userName =
-          Utility.getUserName(id: user.userId!, name: user.displayName!);
-     // kAnalytics.logEvent(name: 'create_newUser');
+      // user.userName =
+      //     Utility.getUserName(id: user.userId!, name: user.displayName!);
+      // kAnalytics.logEvent(name: 'create_newUser');
 
       // Time at which user is created
       user.createdAt = DateTime.now().toUtc().toString();
@@ -126,10 +198,10 @@ class AuthMethods extends ChangeNotifier  {
   Future<User?> getCurrentUser() async {
     try {
       isBusy = true;
-     // Utility.logEvent('get_currentUSer', parameter: {});
+      // Utility.logEvent('get_currentUSer', parameter: {});
       user = _firebaseAuth.currentUser;
       if (user != null) {
-       // await getProfileUser();
+        // await getProfileUser();
         authStatus = AuthStatus.LOGGED_IN;
         userId = user!.uid;
       } else {
@@ -160,11 +232,45 @@ class AuthMethods extends ChangeNotifier  {
     }
   }
 
+  /// `Update user` profile
+  Future<void> updateUser(
+      docId, disPlayName, location, bio, profilePicture, bannerImage) async {
+    await FirebaseFirestore.instance.collection('profile')
+        .doc(docId)
+        .update({
+      "displayName": disPlayName,
+      "bio": bio,
+      "location": location,
+      "profilePic": profilePicture,
+      "bannerImage": bannerImage,
+
+    })
+        .then((_) => print("success"))
+        .catchError((error) => print('Failed: $error'));
+  }
+
+
+
+  // /// `Fetch` user `detail` whose userId is passed
+  // Future<UserModel?> getUserDetail(String userId) async {
+  //   UserModel user;
+  //   var event = await kDatabase.child('profile').child(userId).once();
+  //
+  //   final map = event.snapshot.value as Map?;
+  //   if (map != null) {
+  //     user = UserModel.fromJson(map);
+  //     user.key = event.snapshot.key!;
+  //     return user;
+  //   } else {
+  //     return null;
+  //   }
+  // }
+
 
 
   Future<void> signOut() async {
     await _firebaseAuth.signOut();
-   }
+  }
 
 
 

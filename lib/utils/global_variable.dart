@@ -14,7 +14,7 @@ const webScreenSize = 600;
 List<Widget> homeScreenItems = [
   const MyHomePage(),
   const LocalPage(),
-   const CameraPage(),
+  const CameraPage(),
   MessageScreen(),
-  ProfileScreen(),
+  ProfileScreen(uid: FirebaseAuth.instance.currentUser!.uid,),
 ];

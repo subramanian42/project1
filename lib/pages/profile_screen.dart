@@ -1,223 +1,439 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:project1/pages/edit_profile_screen.dart';
 import 'package:project1/pages/messagesScreen.dart';
-
-
-
+import 'package:url_launcher/url_launcher.dart';
 import '../models/post.dart';
+import '../resources/auth_methods.dart';
+import '../resources/firestore_methods.dart';
 import '../testing/custom_video_player_preview.dart';
 import '../testing/user_model.dart';
 import '../testing/videoList.dart';
+import '../utils/utils.dart';
+import '../widgets/follow_button.dart';
 
 
+class ProfileScreen extends StatefulWidget {
+  final String uid;
 
-class ProfileScreen extends StatelessWidget {
-  static const routeName = '/profile';
+  const ProfileScreen({Key? key, required this.uid}) : super(key: key);
 
-  const ProfileScreen({
-    Key? key,
-  }) : super(key: key);
+
 
   @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  var userData = {};
+  int postLen = 0;
+  int followers = 0;
+  int following = 0;
+  bool isFollowing = false;
+  bool isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    getData();
+  }
+
+  _launchURLApp(String siteUrl) async {
+    var url = Uri.parse(siteUrl);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(
+        url,
+
+      );
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
+  getData() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      var userSnap = await FirebaseFirestore.instance
+          .collection('profile')
+          .doc(widget.uid)
+          .get();
+
+      // // get post lENGTH
+      // var postSnap = await FirebaseFirestore.instance
+      //     .collection('posts')
+      //     .where('uid', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+      //     .get();
+
+      // postLen = postSnap.docs.length;
+      userData = userSnap.data()!;
+      // followers = userSnap.data()!['followersList'].length;
+      following = userSnap.data()!['followingList'].length;
+      // isFollowing = userSnap
+      //     .data()!['followersList']
+      //     .contains(FirebaseAuth.instance.currentUser!.uid);
+      setState(() {});
+    } catch (error) {
+      Utility.customSnackBar(context, error.toString());
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
+  @override
   Widget build(BuildContext context) {
-    User? user = ModalRoute.of(context)!.settings.arguments as User?;
-    user = user ??= User.users[0];
-
-    List<Post> posts = [];
-    // List<Post> posts = Post.posts.where((post) {
-    //   return post.user.id == user!.id;
-    // }).toList();
-
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          '@${user.username}',
-          style: Theme.of(context)
-              .textTheme
-              .titleLarge!
-              .copyWith(color: Colors.white),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _ProfileInformation(user: user),
-            _ProfileContent(posts: posts),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ProfileInformation extends StatelessWidget {
-  const _ProfileInformation({
-    Key? key,
-    required this.user,
-  }) : super(key: key);
-
-  final User user;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 50,
-          backgroundColor: Colors.white,
-          backgroundImage: AssetImage(user.imagePath),
-        ),
-        const SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 75.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
             children: [
-              _buildUserInfo(
-                context,
-                'Following',
-                '${user.followings}',
-              ),
-              _buildUserInfo(
-                context,
-                'Followers',
-                '${user.followers}',
-              ),
-              _buildUserInfo(
-                context,
-                'Likes',
-                '${user.likes}',
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Material(
-              color: Colors.transparent,
-              elevation: 0,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                      context, MaterialPageRoute(builder: (context) => VideoList()));
-                },
-                style: ElevatedButton.styleFrom(
-                  primary: const Color(0xFFFF006E),
-                  fixedSize: const Size(200, 50),
-                ),
-                child: Text(
-                  'Follow',
-                  style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                      fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Material(
-              color: Colors.transparent,
-              elevation: 0,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.white,
-                  fixedSize: const Size(50, 50),
-                ),
-                child: const Icon(
-                  Icons.arrow_drop_down,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-      ],
-    );
-  }
+              SizedBox(
+                height: MediaQuery
+                    .of(context)
+                    .size
+                    .height / 2.20,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    SizedBox(
+                      height: MediaQuery
+                          .of(context)
+                          .size
+                          .height / 3.3,
+                      width: MediaQuery
+                          .of(context)
+                          .size
+                          .width,
+                      child: Image.network(
+                        userData['bannerImage'] ?? '', //https://pixy.org/download/55685/
+                        fit: BoxFit.cover,
+                      ),
+                    ),
 
-  Expanded _buildUserInfo(
-      BuildContext context,
-      String type,
-      String value,
-      ) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium!
-                .copyWith(fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            type,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall!
-                .copyWith(color: Colors.grey.shade200, letterSpacing: 1.5),
-          ),
-        ],
-      ),
-    );
-  }
-}
+                    Positioned(
+                      top: 3,
+                      right: 5,
+                      child: Row(
+                        children: [
+                          //settings icon
+                          IconButton(
+                            onPressed: () {},
+                            splashRadius: 20,
+                            icon: CircleAvatar(
+                              backgroundColor: Colors.white.withOpacity(0.9),
+                              child: const FaIcon(
+                                FontAwesomeIcons.gear,
+                                color: Colors.grey,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // back button
 
-class _ProfileContent extends StatelessWidget {
-  const _ProfileContent({
-    Key? key,
-    required this.posts,
-  }) : super(key: key);
+                    Padding(
+                        padding: const EdgeInsets.only(top: 155),
+                        child: _profileInfoContainer()
+                    ),
 
-  final List<Post> posts;
-
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          const TabBar(
-            indicatorColor: Colors.white,
-            tabs: [
-              Tab(icon: Icon(Icons.grid_view_rounded)),
-              Tab(icon: Icon(Icons.favorite)),
-            ],
-          ),
-          SizedBox(
-            height: MediaQuery.of(context).size.height,
-            child: TabBarView(
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                // First tab
-                GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: posts.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    childAspectRatio: 9 / 16,
+                    // PROFILE PICTURE WIDGET
+                    Positioned(
+                      top: 95,
+                      left: 25,
+                      child: SizedBox(
+                          width: 115.0,
+                          height: 115.0,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 2.0,
+                              ),
+                            ),
+                            child: ClipOval(
+                              child: Image.network(
+                                userData['profilePic'] ?? '',
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          )
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 15,),
+              // Posts display
+              Padding(
+                padding: const EdgeInsets.only(left: 10),
+                child: Container(
+                  height: 275,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 7,
+                    itemBuilder: (BuildContext context, int index) {
+                      return  Card(
+                        margin: EdgeInsets.only(right: 9.0),
+                        clipBehavior: Clip.antiAlias,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.0),
+                        ),
+                        elevation: 0.0,
+                        child: InkWell(
+                          onTap: () {},
+                          child: Container(
+                            decoration: BoxDecoration(
+                                image: DecorationImage(
+                                  image: NetworkImage('https://images.pexels.com/photos/2602545/pexels-photo-2602545.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500'),
+                                  fit: BoxFit.cover,
+                                  scale: 2.0,
+                                )),
+                            width: 175.0,
+                            child: Center(),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  itemBuilder: (context, index) {
-                    return CustomVideoPlayerPreview(
-                      post: posts[index],
-                    );
-                  },
                 ),
-                // Second tab
-                const Icon(
-                  Icons.favorite,
-                  color: Colors.white,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
+
+
+  Widget _profileInfoContainer() {
+    return Stack(
+        children:  <Widget>[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 1.0),
+            child: Container(
+              height: MediaQuery
+                  .of(context)
+                  .size
+                  .height / 3.8,
+              decoration: const BoxDecoration(
+                color: Color.fromARGB(255, 31, 30, 29),    //const kGreyColor2
+                borderRadius: BorderRadius.all(
+                  Radius.circular(10),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 3,
+            left: 145,
+            child: Container(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    userData['displayName']?.toString() ?? '',
+                    maxLines: 1,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      fontFamily: 'Arial',
+                    ),
+                  ),
+                  SizedBox(height: 1,),
+                  Text(
+                    userData['userName'] ?? '',
+                    maxLines: 1,
+                    style: const TextStyle(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.normal,
+                        fontSize: 14),
+                  ),
+                  SizedBox(height: 1,),
+                  Row(
+                    children: [
+                      Text(
+                        '1',
+                        maxLines: 1,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14),
+                      ),
+                      Text(
+                        ' City',
+                        maxLines: 1,
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          fontFamily: 'Open Sans',),
+                      ),
+                      Text(
+                        '  ●  ',
+                        maxLines: 1,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14),
+                      ),
+                      Text(
+                        following.toString(),
+                        maxLines: 1,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14),
+                      ),
+                      Text(
+                        ' Following',
+                        maxLines: 1,
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          fontFamily: 'Open Sans',
+                        ),
+                      ),
+
+                    ],
+                  ),
+
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            top: 65,
+            left: 8,
+            child: Container(
+              width: 300,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.pin_drop_outlined, size: 15, color:Colors.white,),
+                      Text(
+                        userData['location'] ?? '',
+                        maxLines: 1,
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          fontFamily: 'Open Sans',
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 6,),
+                  Text(
+                    userData['bio'] ?? '',
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 3,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.normal,
+                        fontSize: 14),
+                  ),
+                  SizedBox(height: 6,),
+                  GestureDetector(
+                    onTap: () => _launchURLApp(userData['webSite']),
+                    child: Text(
+                      userData['webSite'] ?? '',
+                      textAlign: TextAlign.left,
+                      maxLines: 1,
+                      style: TextStyle(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.normal,
+                          fontSize: 14),
+                    ),
+                  ),
+                  SizedBox(height: 17,),
+                  Row(
+                    children: [
+                      FirebaseAuth.instance.currentUser!.uid ==
+                          widget.uid
+                          ? FollowButton(
+                        text: 'Edit Profile',
+                        function: () async {
+
+                          Navigator.of(context)
+                              .push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  EditProfileScreen(
+                                    uid: userData['userId'],
+                                    locationPre: userData['location'],
+                                    displayNamePre: userData['displayName'],
+                                    biographyPre: userData['bio'],
+                                    picturePre: userData['profilePic'],
+                                    bannerPre: userData['bannerImage'],
+                                    userName: userData['userName'],
+                                  ),
+                            ),
+                          );
+
+                        },
+                      )
+                          : isFollowing
+                          ? FollowButton(
+                        text: 'Unfollow',
+                        function: () async {
+                          await FireStoreMethods()
+                              .followUser(
+                            FirebaseAuth.instance
+                                .currentUser!.uid,
+                            userData['userName'],
+                          );
+
+                          setState(() {
+                            isFollowing = false;
+                            followers--;
+                          });
+                        },
+                      )
+                          : FollowButton(
+                        text: 'Follow',
+                        function: () async {
+                          await FireStoreMethods()
+                              .followUser(
+                            FirebaseAuth.instance
+                                .currentUser!.uid,
+                            userData['uid'],
+                          );
+
+                          setState(() {
+                            isFollowing = true;
+                            followers++;
+                          });
+                        },
+                      )
+                    ],
+                  ),
+
+
+
+
+                ],
+              ),
+            ),
+
+          )
+        ]
+    );
+  }
+
+
 }
+
+
+

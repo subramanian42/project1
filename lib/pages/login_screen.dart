@@ -7,8 +7,10 @@ import 'package:provider/provider.dart';
 
 import '../resources/auth_methods.dart';
 import '../utils/utils.dart';
+import '../widgets/appWidgets.dart';
 import '../widgets/customFlatButton.dart';
 import '../widgets/customWidgets.dart';
+import '../widgets/googleLoginButton.dart';
 import '../widgets/newWidget/customLoader.dart';
 import '../widgets/text_field_input.dart';
 
@@ -42,93 +44,107 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _body(BuildContext context) {
-    return SingleChildScrollView(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 30),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            const SizedBox(height: 150),
-            _entryField('Enter email', controller: _emailController),
-            _entryField('Enter password',
-                controller: _passwordController, isPassword: true),
-            _emailLoginButton(context),
-            const SizedBox(height: 20),
-            _labelButton('Forget password?', onPressed: () {
-              Navigator.of(context).pushNamed('/ForgetPasswordPage');
-            }),
-            const Divider(
-              height: 30,
+    ThemeData theme = Theme.of(context);
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
+          padding: EdgeInsets.all(50),
+          width: double.infinity,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                const Padding(
+                  padding: EdgeInsets.only(top: 90),
+                  child: Text(
+                    'Hello World',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 5),
+                Text(
+                  'Sign in to continue',
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 35),
+                Input(
+                  label: 'Email',
+                  icon: Icons.mail,
+                  controller: _emailController,
+                ),
+                SizedBox(height: 15),
+                Input(
+                  label: 'Password',
+                  icon: Icons.lock,
+                  controller: _passwordController,
+                  obscure: true,
+                ),
+                SizedBox(height: 30),
+                Button(
+                  label: 'Login',
+                  theme: theme,
+                  onPressed:_emailLogin,
+                ),
+                SizedBox(height: 15),
+                GestureDetector(
+                  onTap: () {
+
+                  },
+                  child: Text(
+                    'Forgo0t password?',
+                    style: TextStyle(
+                      color: theme.primaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 15),
+                // GoogleLoginButton(
+                //   loginCallback: widget.loginCallback!,
+                //   loader: loader,
+                // ),
+                // SizedBox(height: 15),
+                Container(
+                  width: double.infinity,
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Text("Don't have an account? "),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pushNamed('/signup');
+                          },
+                          child: Text(
+                            'Sign Up',
+                            style: TextStyle(
+                              color: theme.primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              ],
             ),
-            const SizedBox(
-              height: 30,
-            ),
-            _labelButton('Sign Up?', onPressed: () {
-              Navigator.of(context).pushNamed('/signup');
-            }),
-            const SizedBox(height: 100),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _entryField(String hint,
-      {required TextEditingController controller, bool isPassword = false}) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: TextField(
-        controller: controller,
-        keyboardType: TextInputType.emailAddress,
-        style: const TextStyle(
-          fontStyle: FontStyle.normal,
-          fontWeight: FontWeight.normal,
-        ),
-        obscureText: isPassword,
-        decoration: InputDecoration(
-          hintText: hint,
-          border: InputBorder.none,
-          focusedBorder: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(30.0)),
-              borderSide: BorderSide(color: Colors.blue)),
-          contentPadding:
-          const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-        ),
-      ),
-    );
-  }
 
-  Widget _labelButton(String title, {Function? onPressed}) {
-    return TextButton(
-      onPressed: () {
-        if (onPressed != null) {
-          onPressed();
-        }
-      },
-      child: Text(
-        title,
-        style: const TextStyle(
-            color: Colors.lightBlueAccent,
-            fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  Widget _emailLoginButton(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 35),
-      child: CustomFlatButton(
-        label: "Submit",
-        onPressed: _emailLogin,
-        borderRadius: 30,
-      ),
-    );
-  }
 
   void _emailLogin() {
     var state = Provider.of<AuthMethods>(context, listen: false);
@@ -161,12 +177,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
-      appBar: AppBar(
-        title: customText('Sign in',
-            context: context, style: const TextStyle(fontSize: 20)),
-        centerTitle: true,
-      ),
       body: _body(context),
     );
   }

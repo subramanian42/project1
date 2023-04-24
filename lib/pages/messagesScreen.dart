@@ -3,6 +3,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+import '../resources/auth_methods.dart';
+import 'login_screen.dart';
+
 
 class MessageScreen extends StatefulWidget {
   MessageScreen() : super();
@@ -17,12 +20,12 @@ class MessageScreenState extends State<MessageScreen> {
 
   PageController pageController = PageController(initialPage: 0, viewportFraction: 0.8);
   late VideoPlayerController _controller;
-   final List<String> _videoFiles =  ["video_1.mp4", "video_2.mp4", "video_3.mp4","video_4.mp4","video_5.mp4"] ;
+  // final List<String> _videoFiles =  ["video_1.mp4", "video_2.mp4", "video_3.mp4","video_4.mp4","video_5.mp4"] ;
 
   @override
   void initState(){
     super.initState();
-    _controller = VideoPlayerController.asset('assets/videos/${_videoFiles[1]}')
+    _controller = VideoPlayerController.asset('assets/videos/video_2.mp4')
       ..initialize().then((value) {
         _controller.play();
         _controller.setLooping(true);
@@ -39,10 +42,27 @@ class MessageScreenState extends State<MessageScreen> {
 
   @override
   Widget build(BuildContext context) {
-  //  _controller.play();
+    //  _controller.play();
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+          title: Text(widget.title),
+          actions: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: 'log ut',
+              onPressed: ()async {
+                await AuthMethods().signOut();
+                Navigator.of(context)
+                    .pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                    const LoginScreen(),
+                  ),
+                );
+
+              },
+            ), //IconButton
+          ]
       ),
 
       body: Center(
@@ -52,9 +72,9 @@ class MessageScreenState extends State<MessageScreen> {
           child: PageView.builder(
               dragStartBehavior: DragStartBehavior.down,
               controller: pageController,
-              itemCount: _videoFiles.length,
+              itemCount: 5,
               itemBuilder: (context, position){
-                position = position % _videoFiles.length;
+                position = position % 5;
                 return videoSlider(position);
               }),
         ),
@@ -125,6 +145,3 @@ class MessageScreenState extends State<MessageScreen> {
 
 
 }
-
-
-

@@ -1,9 +1,11 @@
+import 'package:bloc/bloc.dart';
 import 'package:camera/camera.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:project1/pages/login_screen.dart';
 import 'package:project1/pages/signup_screen.dart';
+import 'package:project1/resources/app_bloc_observer.dart';
 import 'package:project1/resources/auth_methods.dart';
 import 'package:project1/responsive/mobile_screen_layout.dart';
 import 'package:project1/state/appState.dart';
@@ -20,6 +22,7 @@ import 'package:project1/providers/user_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  Bloc.observer = AppBlocObserver();
   cameras = await availableCameras();
   runApp(const MyApp());
 }
@@ -34,6 +37,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider<AppState>(create: (_) => AppState()),
         ChangeNotifierProvider<AuthMethods>(create: (_) => AuthMethods()),
+
       ],
 
       child: MaterialApp(
@@ -74,7 +78,7 @@ class MyApp extends StatelessWidget {
           '/home': (context) => const MyHomePage(),
           '/post': (context) =>  const CameraPage(),
           '/message': (context) =>  MessageScreen(),
-          '/profile': (context) => ProfileScreen(),
+          '/profile': (context) => ProfileScreen(uid: FirebaseAuth.instance.currentUser!.uid,),
 
 
 

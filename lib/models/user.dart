@@ -24,6 +24,7 @@ class UserModel extends Equatable {
   String? fcmToken;
   List<String>? followersList;
   List<String>? followingList;
+  List<String>? citiesList;
 
   UserModel(
       {this.email,
@@ -45,9 +46,11 @@ class UserModel extends Equatable {
         this.isVerified,
         this.fcmToken,
         this.followersList,
-        this.followingList});
+        this.followingList,
+        this.citiesList,
+      });
 
-  UserModel.fromJson(Map<dynamic, dynamic>? map) {
+  UserModel.fromJson(Map<dynamic, dynamic>? map, DocumentReference<Object?> reference) {
     if (map == null) {
       return;
     }
@@ -69,6 +72,7 @@ class UserModel extends Equatable {
     userName = map['userName'];
     webSite = map['webSite'];
     fcmToken = map['fcmToken'];
+    citiesList = map['citiesList'];
     isVerified = map['isVerified'] ?? false;
     if (map['followerList'] != null) {
       followersList = <String>[];
@@ -106,8 +110,13 @@ class UserModel extends Equatable {
       'isVerified': isVerified ?? false,
       'fcmToken': fcmToken,
       'followerList': followersList,
-      'followingList': followingList
+      'followingList': followingList,
+      'citiesList': citiesList
     };
+  }
+
+  factory UserModel.fromData(Map<String, dynamic> data) {
+    return UserModel.fromJson(data['profile'], data['ref']);
   }
 
   UserModel copyWith({
@@ -131,6 +140,7 @@ class UserModel extends Equatable {
     String? fcmToken,
     List<String>? followingList,
     List<String>? followersList,
+    List<String>? citiesList,
   }) {
     return UserModel(
       email: email ?? this.email,
@@ -153,6 +163,8 @@ class UserModel extends Equatable {
       fcmToken: fcmToken ?? this.fcmToken,
       followersList: followersList ?? this.followersList,
       followingList: followingList ?? this.followingList,
+      citiesList: citiesList ?? this.citiesList,
+
     );
   }
 
@@ -185,75 +197,14 @@ class UserModel extends Equatable {
     following,
     fcmToken,
     followersList,
-    followingList
+    followingList,
+    citiesList,
   ];
+
+  factory UserModel.fromSnapshot(DocumentSnapshot snapshot) {
+    final userModel = UserModel.fromJson(
+        snapshot.data() as Map<String, dynamic>, snapshot.reference);
+    return userModel;
+  }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import 'package:google_maps_flutter/google_maps_flutter.dart';
-//
-// class User {
-//   final String email;
-//   final String uid;
-//   final String photoUrl;
-//   final String username;
-//   final String bioLocation;
-//   final List followers;
-//   final List following;
-//   //final LatLng currentLocation;
-//
-//   const User(
-//       {required this.username,
-//         required this.uid,
-//         required this.photoUrl,
-//         required this.email,
-//         required this.bioLocation,
-//         required this.followers,
-//         required this.following,
-//       //  required this.currentLocation
-//
-//
-//       });
-//
-//   static User fromSnap(DocumentSnapshot snap) {
-//     var snapshot = snap.data() as Map<String, dynamic>;
-//
-//     return User(
-//       username: snapshot["username"],
-//       uid: snapshot["uid"],
-//       email: snapshot["email"],
-//       photoUrl: snapshot["photoUrl"],
-//       bioLocation: snapshot["bioLocation"],
-//       followers: snapshot["followers"],
-//       following: snapshot["following"],
-//     //  currentLocation: snapshot["currentLocation"]
-//     );
-//   }
-//
-//   Map<String, dynamic> toJson() => {
-//     "username": username,
-//     "uid": uid,
-//     "email": email,
-//     "photoUrl": photoUrl,
-//     "bioLocation": bioLocation,
-//     "followers": followers,
-//     "following": following,
-//   };
-// }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project1/pages/comments_screen.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
@@ -11,7 +12,7 @@ import 'package:get/get.dart';
 
 class CustomVideoPlayer extends StatefulWidget {
 
-   const CustomVideoPlayer({
+  const CustomVideoPlayer({
     Key? key,
     required this.post,
   }) : super(key: key);
@@ -26,6 +27,7 @@ class CustomVideoPlayer extends StatefulWidget {
 
 class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
   late VideoPlayerController videoPlayerController;
+  final VideoController videoController = Get.put(VideoController());
 
   @override
   void initState() {
@@ -48,6 +50,7 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
+
     return VisibilityDetector(
       key: Key(videoPlayerController.dataSource),
       onVisibilityChanged: (visibilityInfo) {
@@ -70,31 +73,42 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
             }
           });
         },
-        child: AspectRatio(
-          aspectRatio: videoPlayerController.value.aspectRatio,
-
+        child: SafeArea(
           child: Stack(
             children: [
               VideoPlayer(videoPlayerController),
-              const Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
+              Container(
+                decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        Colors.black,
-                        Colors.transparent,
-                        Colors.transparent,
-                        Colors.black,
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      stops: [0.0, 0.2, 0.8, 1.0],
-                    ),
-                  ),
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+
+                        colors: <Color> [
+                          Colors.transparent,
+                          Colors.transparent,
+                          Colors.transparent,
+                          Colors.transparent,
+                          Colors.transparent,
+                          Colors.black87
+                        ]
+                    )
                 ),
               ),
-              _buildVideoCaption(context),
-             _buildVideoActions(context),
+
+              //CONTROLS
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                children: <Widget>[
+                  _topNavBar(),
+                  Column(
+                    children: <Widget>[
+                      _buildVideoActions(context),
+                      _buildVideoCaption(context)
+                    ],
+                  )
+                ],
+              )
             ],
           ),
         ),
@@ -105,31 +119,98 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
     );
   }
 
+  Widget _topNavBar(){
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 15.0),
+
+      child: InkWell(
+        onTap: () => Navigator.pop(context),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+
+          children: <Widget>[
+            Column(
+              children: <Widget>[
+
+                SizedBox(width: 05.0,),
+                Icon(Icons.arrow_back_ios_outlined, size: 25, color:Colors.white54,
+                ),
+              ],
+            ),
+
+            Column(
+              children: const <Widget>[
+                Text(
+                  'Back',
+                  style: TextStyle(
+                      fontSize: 18.0,
+                      color: Colors.white54
+                  ),
+                )
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+
   Align _buildVideoActions(BuildContext context) {
     return Align(
       alignment: Alignment.centerRight,
-      child: Container(
-        height: videoPlayerController.value.size.height,
-        width: MediaQuery.of(context).size.width * 0.2,
-        padding: const EdgeInsets.only(bottom: 20.0),
+
+      child: Padding(
+        padding: EdgeInsets.only(right: 8.0),
+
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: const [
-            _VideoAction(
-              icon: Icons.favorite,
-              value: '11.4k',
+          crossAxisAlignment: CrossAxisAlignment.center,
+
+          children: <Widget>[
+            // Imagen perfil
+            SizedBox(height: 25.0,),
+
+            InkWell(
+                onTap: () {
+                  videoController.likeVideo(widget.post.id!);
+                },
+                child: Icon(Icons.favorite_outline_rounded, size: 45, color:Colors.white,)),
+            SizedBox(height: 5.0,),
+            Text(
+              widget.post.likeList!.length.toString(),
+              style: TextStyle(
+                  fontSize: 10.0,
+                  color: Colors.white
+              ),
             ),
-            SizedBox(height: 10),
-            _VideoAction(
-              icon: Icons.comment,
-              value: '1.4k',
+
+            SizedBox(height: 20.0,),
+
+            InkWell(
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => CommentScreen(id: widget.post.id!,)) ),
+                child: Icon(Icons.mode_comment_outlined, size: 45, color:Colors.white,)),
+            SizedBox(height: 5.0,),
+            Text(
+              '5109',
+              style: TextStyle(
+                  fontSize: 10.0,
+                  color: Colors.white
+              ),
             ),
-            SizedBox(height: 10),
-            _VideoAction(
-              icon: Icons.forward_rounded,
-              value: '500',
+
+            SizedBox(height: 20.0,),
+
+            Icon(Icons.mobile_screen_share, size: 45, color:Colors.white,),
+            SizedBox(height: 5.0,),
+            Text(
+              '119',
+              style: TextStyle(
+                  fontSize: 10.0,
+                  color: Colors.white
+              ),
             ),
-            SizedBox(height: 50),
+
           ],
         ),
       ),
@@ -138,86 +219,120 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
 
   GestureDetector _buildVideoCaption(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          ProfileScreen.routeName,
-          arguments: widget.post,
-        );
-      },
-      child: Align(
-        alignment: Alignment.bottomLeft,
-        child: Container(
-          height: 125,
-          width: MediaQuery.of(context).size.width * 0.75,
-          padding: const EdgeInsets.all(20.0),
+        onTap: () {
+          // Navigator.pushNamed(
+          //   context,
+          //   ProfileScreen.routeName,
+          //   arguments: widget.post,
+          // );
+        },
+        child: Padding(
+          padding: EdgeInsets.only(left: 15.0, bottom: 15.0, right: 8.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${widget.post.username}',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall!
-                    .copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Container(
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(25.0),
+                        border: Border.all(
+                          color: Colors.black,
+                          width: .01,
+                        )
+                    ),
+
+                    child: ClipOval(
+                        child: Image.network('https://media.istockphoto.com/id/1176363686/vector/smiling-young-asian-girl-profile-avatar-vector-icon.jpg?s=612x612&w=0&k=20&c=QuyZJNKexFQgDPr9u91hKieWKOYbaFxPb0b0gwmd-Lo=',
+                          width: 40.0,
+                          height: 40.0,
+                          fit: BoxFit.cover,
+                        )
+                    ),
+                  ),
+                  SizedBox(width: 10.0,),
+                  Text(
+                    '${widget.post.username}',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold
+                    ),
+                  ),
+
+                  SizedBox(width: 15.0,),
+
+                  ElevatedButton(
+                    onPressed: () {
+                      // Add your logic here for when the button is pressed
+                    },
+                    child: Text(
+                      'Follow',
+                      style: TextStyle(
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.white60,
+                      padding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 2.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                  )
+
+                ],
               ),
-              const SizedBox(height: 5),
-              Text(
-                 widget.post.caption!,
-                maxLines: 3,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall!
-                    .copyWith(color: Colors.white),
-              ),
+
+              SizedBox(height: 15.0,),
+
+              Row(
+                children: <Widget>[
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+
+                      children: <Widget>[
+                        Container(
+                          child: Text(
+                            ' ${widget.post.caption!}',
+                            style: const TextStyle(
+                                color: Colors.white
+                            ),
+                          ),
+                        ),
+
+                        Padding(
+                          padding: EdgeInsets.symmetric(vertical: 10.0),
+                          child: Row(
+                            children: const <Widget>[
+                              Icon(Icons.pin_drop_outlined, size: 25, color:Colors.white,),
+
+                              SizedBox(width: 05.0,),
+
+                              Text(
+                                'location',
+                                style: TextStyle(
+                                    color: Colors.white
+                                ),
+                              ),
+
+                              SizedBox(width: 20.0,),
+
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+
+                ],
+              )
+
             ],
           ),
-        ),
-      ),
+        )
     );
   }
 }
 
-class _VideoAction extends StatelessWidget {
-  const _VideoAction({
-    Key? key,
-    required this.icon,
-    required this.value,
-  }) : super(key: key);
-
-  final IconData icon;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Material(
-          color: Colors.transparent,
-          child: Center(
-            child: Ink(
-              decoration: const ShapeDecoration(
-                color: Colors.black,
-                shape: CircleBorder(),
-              ),
-              child: IconButton(
-                icon: Icon(icon),
-                color: Colors.white,
-                onPressed: () {},
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          value,
-          style: Theme.of(context)
-              .textTheme
-              .titleSmall!
-              .copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
-  }
-}

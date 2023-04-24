@@ -24,7 +24,6 @@ class Post {
   bool? isVideo;
 
   Post({
-
     this.username,
     this.uid,
     this.id,

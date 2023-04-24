@@ -99,7 +99,7 @@ extension ShowSnackBar on BuildContext {
 }
 
 
-// /// Google map's theme for this app.
-// const mapTheme =
-// // ignore: lines_longer_than_80_chars
-//     '[{"elementType":"geometry","stylers":[{"color":"#202c3e"}]},{"elementType":"labels"
+/// Google map's theme for this app.
+const mapTheme =
+// ignore: lines_longer_than_80_chars
+    '[{"featureType": "administrative.locality","elementType": "labels","stylers": [{"visibility": "on"}]},{"featureType": "administrative.land_parcel","elementType": "geometry","stylers": [{"visibility": "off"}]},{"featureType": "administrative.land_parcel","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "landscape.natural.landcover","elementType": "geometry","stylers": [{"visibility": "on"},{"lightness": "-11"},{"saturation": "-11"}]},{"featureType": "landscape.natural.landcover","elementType": "labels.text","stylers": [{"visibility": "on"}]},{"featureType": "landscape.natural.terrain","elementType": "geometry","stylers": [{"visibility": "on"},{"lightness": "-5"}]},{"featureType": "poi.business","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "poi.government","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "poi.medical","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "poi.place_of_worship","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "poi.school","elementType": "geometry.fill","stylers": [{"visibility": "off"}]},{"featureType": "poi.school","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "road","elementType": "geometry","stylers": [{"visibility": "off"}]},{"featureType": "road","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "road.highway","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "road.highway.controlled_access","elementType": "geometry","stylers": [{"visibility": "off"}]},{"featureType": "road.highway.controlled_access","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "transit","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "water","elementType": "geometry.fill","stylers": [{"lightness": "-69"}]}]' ;
