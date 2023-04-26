@@ -38,6 +38,7 @@ class _MyHomePageState extends State<MyHomePage> {
   CameraPosition? position;
   Set<Circle> circles = {};
   late List<DocumentSnapshot> _mapVideos = [];
+  List<VideoPlayerController> _videoPlayerControllers = [];
   int _currentVideoIndex = 0;
 
   /// Whether the carousel is opened or not.
@@ -97,7 +98,10 @@ class _MyHomePageState extends State<MyHomePage> {
         .where('uid', isEqualTo: 'Lgm4blpd47PkNgB6HPuuEmG0uHG3')
         .get()
         .then((querySnapshot) {
-      setState(() => _mapVideos = querySnapshot.docs);
+      setState(() {
+        _mapVideos = querySnapshot.docs;
+        _videoPlayerControllers = _mapVideos.map((e) => VideoPlayerController.network(e.get('videoUrl'))..initialize()).toList();
+      });
 
       _controller = VideoPlayerController.network('');
     });
@@ -303,6 +307,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         setState(() {
                           _isCarouselOpened = true;
                         });
+                        if(_videoPlayerControllers.isNotEmpty) {
+                          _videoPlayerControllers.first.play();
+                          _videoPlayerControllers.first.setLooping(true);
+                        }
                       },
                     ),
                   ),
@@ -335,12 +343,21 @@ class _MyHomePageState extends State<MyHomePage> {
                     enlargeCenterPage: true,
                     viewportFraction: 0.7,
                     onPageChanged: (index, reason) {
-                      _initVideoPlayer(_mapVideos[index]);
+                      // _initVideoPlayer(_mapVideos[index]);
+                      _videoPlayerControllers.asMap().forEach((key, value) {
+                        if (key == index) {
+                          _videoPlayerControllers[key].play();
+                          _videoPlayerControllers[key].setLooping(true);
+                        } else {
+                          _videoPlayerControllers[key].pause();
+                        }
+                      });
                     },
 
 
                   ),
-                  items: _mapVideos.map((video) {
+                  items: _mapVideos.asMap().entries.map((entry) {
+                    var video = entry.value;
                     return Builder(
                       builder: (BuildContext context) {
                         return Container(
@@ -362,7 +379,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   },
                                   child: ClipRRect(
                                     borderRadius: const BorderRadius.all(Radius.circular(10)),
-                                    child: VideoPlayer(_controller),
+                                    child: VideoPlayer(_videoPlayerControllers[entry.key]),
                                   ),
                                 ),
                                 const Align(
@@ -396,7 +413,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          const Text("@Username", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),),
+                                          Text("@Username ${entry.key}", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),),
                                           const SizedBox(height: 8,),
                                           Row(
                                             children: const [
