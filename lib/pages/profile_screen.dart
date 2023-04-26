@@ -71,11 +71,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       // postLen = postSnap.docs.length;
       userData = userSnap.data()!;
-      // followers = userSnap.data()!['followersList'].length;
-      following = userSnap.data()!['followingList'].length;
-      // isFollowing = userSnap
-      //     .data()!['followersList']
-      //     .contains(FirebaseAuth.instance.currentUser!.uid);
+      followers = userSnap.data()!['followers'];
+      following = userSnap.data()!['following'];
+      isFollowing = userSnap
+          .data()!['followerList']
+          .contains(FirebaseAuth.instance.currentUser!.uid);
       setState(() {});
     } catch (error) {
       Utility.customSnackBar(context, error.toString());
@@ -386,13 +386,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       )
                           : isFollowing
                           ? FollowButton(
-                        text: 'Unfollow',
+                        text: 'Following',
                         function: () async {
                           await FireStoreMethods()
                               .followUser(
                             FirebaseAuth.instance
                                 .currentUser!.uid,
-                            userData['userName'],
+                            userData['userId'],
                           );
 
                           setState(() {
@@ -408,7 +408,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               .followUser(
                             FirebaseAuth.instance
                                 .currentUser!.uid,
-                            userData['uid'],
+                            userData['userId'],
                           );
 
                           setState(() {
