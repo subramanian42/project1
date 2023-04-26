@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../cubits/notification/notification_cubit.dart';
 import '../pages/following_tab.dart';
 import '../pages/notification_tab.dart';
 import '../pages/view_story_screen.dart';
+import '../repositories/repository.dart';
 
 
 class PanelWidget extends StatefulWidget {
@@ -188,7 +190,11 @@ class _PanelWidgetState extends State<PanelWidget>  with SingleTickerProviderSta
                       controller: _tabController,
                       children:  [
                         FollowingTab(),
-                        NotificationTab(),
+                        BlocProvider(
+                          create: (context) =>
+                              NotificationCubit(repository: Repository()),
+                          child: NotificationTab(),
+                        ),
                       ],
                     ),
                   ),
