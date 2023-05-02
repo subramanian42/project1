@@ -1,6 +1,7 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
@@ -9,9 +10,11 @@ import '../widgets/animated_line.dart';
 
 class ViewStoryScreen extends StatefulWidget {
 
-  DocumentSnapshot<Object?> user;
+  List<DocumentSnapshot> storyPosts;
+  DocumentSnapshot<Object?> firstStory;
+  String uid;
 
-  ViewStoryScreen({Key? key, required this.user}) : super(key: key);
+  ViewStoryScreen({Key? key,required this.storyPosts, required this.firstStory,required this.uid}) : super(key: key);
 
   @override
   State<ViewStoryScreen> createState() => _ViewStoryScreenState();
@@ -23,32 +26,14 @@ class _ViewStoryScreenState extends State<ViewStoryScreen> with TickerProviderSt
   late AnimationController _animationController;
   late VideoPlayerController? _videoPlayerController = null;
   int _currentStory = 0;
-  late List<DocumentSnapshot> _imagePosts;
-  late List<DocumentSnapshot> _videoPosts;
-  late List<DocumentSnapshot> _storyPosts = [];
-  late DocumentSnapshot<Object?> firstStory;
+  var userData = {};
+
+
 
 
   @override
   void initState() {
-    FirebaseFirestore.instance
-        .collection('images')
-        .where('uid', isEqualTo: widget.user['userId'])
-        .get()
-        .then((querySnapshot) {
-      setState(() => _imagePosts = querySnapshot.docs);
-      _mergePosts();
-    });
-
-    FirebaseFirestore.instance
-        .collection('videos')
-        .where('uid', isEqualTo: widget.user['userId'])
-        .get()
-        .then((querySnapshot) {
-      setState(() => _videoPosts = querySnapshot.docs);
-      _mergePosts();
-    });
-
+     getuserdoc();
     _pageController = PageController();
     _animationController = AnimationController(vsync: this);
 
@@ -57,14 +42,14 @@ class _ViewStoryScreenState extends State<ViewStoryScreen> with TickerProviderSt
         _animationController.stop();
         _animationController.reset();
         setState(() {
-          if (_storyPosts.isNotEmpty && _currentStory + 1 < _storyPosts.length) {
+          if (widget.storyPosts.isNotEmpty && _currentStory + 1 < widget.storyPosts.length) {
             _currentStory += 1;
-            _loadStory(story: _storyPosts[_currentStory]);
+            _loadStory(story: widget.storyPosts[_currentStory]);
           } else {
             // Out of bounds - loop story
             // You can also Navigator.of(context).pop() here
             _currentStory = 0;
-            _loadStory(story: firstStory);
+            _loadStory(story: widget.firstStory);
           }
         });
       }
@@ -73,18 +58,7 @@ class _ViewStoryScreenState extends State<ViewStoryScreen> with TickerProviderSt
     super.initState();
   }
 
-  void _mergePosts() {
-    if (_imagePosts != null && _videoPosts != null) {
-      _storyPosts = [];
-      _storyPosts.addAll(_imagePosts);
-      _storyPosts.addAll(_videoPosts);
-      _storyPosts.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
-      setState(() {
-        firstStory = _storyPosts.first;
-        _loadStory(story: firstStory, animateToPage: false);
-      });
-    }
-  }
+
 
 
   @override
@@ -104,19 +78,19 @@ class _ViewStoryScreenState extends State<ViewStoryScreen> with TickerProviderSt
       setState(() {
         if (_currentStory - 1 >= 0) {
           _currentStory -= 1;
-          _loadStory(story: _storyPosts[_currentStory]);
+          _loadStory(story: widget.storyPosts[_currentStory]);
         }
       });
     } else if (dx > 2 * screenWidth / 3) {
       setState(() {
-        if (_currentStory + 1 < _storyPosts.length) {
+        if (_currentStory + 1 < widget.storyPosts.length) {
           _currentStory += 1;
-          _loadStory(story: _storyPosts[_currentStory]);
+          _loadStory(story: widget.storyPosts[_currentStory]);
         } else {
           // Out of bounds - loop story
           // You can also Navigator.of(context).pop() here
           _currentStory = 0;
-          _loadStory(story: _storyPosts[_currentStory]);
+          _loadStory(story: widget.storyPosts[_currentStory]);
         }
       });
     } else {
@@ -145,13 +119,14 @@ class _ViewStoryScreenState extends State<ViewStoryScreen> with TickerProviderSt
         _videoPlayerController = VideoPlayerController.network(story?.get('videoUrl'))
           ..initialize().then((_) {
             setState(() {});
-            if (_videoPlayerController!.value.isInitialized) {
+            if (_videoPlayerController != null && _videoPlayerController!.value.isInitialized) {
               _animationController.duration = _videoPlayerController!.value.duration;
               _videoPlayerController!.play();
               _animationController.forward();
             }
           });
         break;
+
     }
     if (animateToPage) {
       _pageController.animateToPage(
@@ -162,133 +137,167 @@ class _ViewStoryScreenState extends State<ViewStoryScreen> with TickerProviderSt
     }
   }
 
+  getuserdoc()async {
+    var userSnap = await FirebaseFirestore.instance
+        .collection('profile')
+        .doc(widget.uid)
+        .get();
+    userData = userSnap.data()!;
+  }
 
 
   @override
   Widget build(BuildContext context) {
 
+
+
     final size = MediaQuery.of(context).size;
-    final DocumentSnapshot story = _storyPosts[_currentStory ];
+    final DocumentSnapshot story = widget.storyPosts[_currentStory ];
 
     return Scaffold(
-
-        body:  Stack(
-          fit: StackFit.expand,
-          children: [
-            GestureDetector(
-              onTapDown: (details) => _onTapDown(details, story),
-              child: PageView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                controller: _pageController,
-                itemCount: _storyPosts.length,
-                itemBuilder: (context, index) {
-                  final DocumentSnapshot story = _storyPosts[index];
-                  switch (story.get('isVideo')) {
-                    case false:
-                      return CachedNetworkImage(
-                        fit: BoxFit.cover,
-                        imageUrl: story.get('imageUrl'),
-                      );
-                    case true:
-                      if(_videoPlayerController != null &&
-                          _videoPlayerController!.value.isInitialized){
-                        return FittedBox(
-                          fit: BoxFit.cover,
-                          child: SizedBox(
-                            width: _videoPlayerController!.value.size.width,
-                            height: _videoPlayerController!.value.size.height,
-                            child: VideoPlayer(_videoPlayerController!),
-                          ),
-                        );
-                      }
-
-                  }
-                  return SizedBox.shrink();
-
-                },
-              ),
-            ),
-
-            const SizedBox(height: 10.0),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  const SizedBox(height: 30.0),
-
-                  // * Animated Line //
-                  Row(
-                    children: List.generate(_storyPosts.length, (index) => Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 7.0),
-                          child: AnimatedLineStory(
-                              index: index,
-                              selectedIndex: _currentStory,
-                              animationController: _animationController
-                          ),
-                        )
-                    )
-                    ),
+        backgroundColor: Colors.black87,
+        body:  DismissiblePage(
+          onDismissed: () {
+            Navigator.of(context).pop();
+          },
+          // Note that scrollable widget inside DismissiblePage might limit the functionality
+          // If scroll direction matches DismissiblePage direction
+          direction: DismissiblePageDismissDirection.down,
+          isFullScreen: false,
+          child: Padding(
+            padding: const EdgeInsets.only(top:15),
+            child: Center(
+              child: Container(
+                  width: MediaQuery.of(context).size.width * 0.97,
+                  height: MediaQuery.of(context).size.height * 0.88,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(35),
+                    color: Colors.grey[200],
                   ),
-
-
-                  const SizedBox(height: 20.0),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(35),
+                  child: Stack(
+                    fit: StackFit.expand,
                     children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundImage: NetworkImage(widget.user.get('profilePic')),
+                      GestureDetector(
+                        onTapDown: (details) => _onTapDown(details, story),
+                        child: PageView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          controller: _pageController,
+                          itemCount: widget.storyPosts.length,
+                          itemBuilder: (context, index) {
+                            final DocumentSnapshot story = widget.storyPosts[index];
+                            switch (story.get('isVideo')) {
+                              case false:
+                                return CachedNetworkImage(
+                                  fit: BoxFit.cover,
+                                  imageUrl: story.get('imageUrl'),
+                                );
+                              case true:
+                                if(_videoPlayerController != null &&
+                                    _videoPlayerController!.value.isInitialized){
+                                  return FittedBox(
+                                    fit: BoxFit.cover,
+                                    child: SizedBox(
+                                      width: _videoPlayerController!.value.size.width,
+                                      height: _videoPlayerController!.value.size.height,
+                                      child: VideoPlayer(_videoPlayerController!),
+                                    ),
+                                  );
+                                }
+
+                            }
+                            return SizedBox.shrink();
+
+                          },
+                        ),
                       ),
-                      const SizedBox(width: 10.0),
-                      Expanded(
+
+                      const SizedBox(height: 10.0),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(widget.user.get('displayName'),style: TextStyle(color: Colors.white),),
-                            const Text('5 hours ago', style: TextStyle(color: Colors.white),)
+                            const SizedBox(height: 30.0),
+
+                            // * Animated Line //
+                            Row(
+                              children: List.generate(widget.storyPosts.length, (index) => Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7.0),
+                                    child: AnimatedLineStory(
+                                        index: index,
+                                        selectedIndex: _currentStory,
+                                        animationController: _animationController
+                                    ),
+                                  )
+                              )
+                              ),
+                            ),
+
+
+                            const SizedBox(height: 20.0),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                CircleAvatar(
+                                  radius: 20,
+                                  backgroundImage: NetworkImage(userData['profilePic'] ?? ''),
+                                ),
+                                const SizedBox(width: 10.0),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(userData['userName'] ?? '',style: TextStyle(color: Colors.white),),
+                                      const Text('5 hours ago', style: TextStyle(color: Colors.white),)
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    icon: const Icon(Icons.close, color: Colors.white, )
+                                )
+                              ],
+                            ),
+
+                            const Spacer(),
+                            Row(
+                              children: [
+                                Expanded(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                      child: Container(
+                                        color: Colors.white.withOpacity(.1),
+                                        child: TextField(
+                                          decoration: InputDecoration(
+                                              contentPadding: const EdgeInsets.only(left: 20.0),
+
+                                              hintText: 'Write a comment',
+                                              hintStyle: GoogleFonts.roboto(color: Colors.white)
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                ),
+                                const SizedBox(width: 10.0),
+                                IconButton(
+                                    onPressed: (){},
+                                    icon: const Icon(Icons.send_rounded, color: Colors.white )
+                                )
+                              ],
+                            )
                           ],
                         ),
                       ),
-                      IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close, color: Colors.white, )
-                      )
+
+
                     ],
                   ),
-
-                  const Spacer(),
-                  Row(
-                    children: [
-                      Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10.0),
-                            child: Container(
-                              color: Colors.white.withOpacity(.1),
-                              child: TextField(
-                                decoration: InputDecoration(
-                                    contentPadding: const EdgeInsets.only(left: 20.0),
-
-                                    hintText: 'Write a comment',
-                                    hintStyle: GoogleFonts.roboto(color: Colors.white)
-                                ),
-                              ),
-                            ),
-                          )
-                      ),
-                      const SizedBox(width: 10.0),
-                      IconButton(
-                          onPressed: (){},
-                          icon: const Icon(Icons.send_rounded, color: Colors.white )
-                      )
-                    ],
-                  )
-                ],
+                ),
               ),
             ),
-
-
-          ],
+          ),
         )
 
     );

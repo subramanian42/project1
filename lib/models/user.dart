@@ -74,9 +74,9 @@ class UserModel extends Equatable {
     fcmToken = map['fcmToken'];
     citiesList = map['citiesList'];
     isVerified = map['isVerified'] ?? false;
-    if (map['followerList'] != null) {
+    if (map['followersList'] != null) {
       followersList = <String>[];
-      map['followerList'].forEach((value) {
+      map['followersList'].forEach((value) {
         followersList!.add(value);
       });
     }
@@ -109,7 +109,7 @@ class UserModel extends Equatable {
       'webSite': webSite,
       'isVerified': isVerified ?? false,
       'fcmToken': fcmToken,
-      'followerList': followersList,
+      'followersList': followersList,
       'followingList': followingList,
       'citiesList': citiesList
     };

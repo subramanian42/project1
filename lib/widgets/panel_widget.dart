@@ -27,6 +27,9 @@ class _PanelWidgetState extends State<PanelWidget>  with SingleTickerProviderSta
   late List<DocumentSnapshot> _users;
 
 
+  late DocumentSnapshot<Object?> firstStory ;
+
+
 
 
   @override
@@ -47,21 +50,56 @@ class _PanelWidgetState extends State<PanelWidget>  with SingleTickerProviderSta
     super.dispose();
   }
 
+  Future<List<DocumentSnapshot>> _getUserStories(DocumentSnapshot<Object?> user) async {
+    List<DocumentSnapshot> imagePosts = [];
+    List<DocumentSnapshot> videoPosts = [];
+
+    QuerySnapshot imageQuerySnapshot = await FirebaseFirestore.instance
+        .collection('images')
+        .where('uid', isEqualTo: user['userId'])
+        .get();
+    imagePosts = imageQuerySnapshot.docs;
+
+    QuerySnapshot videoQuerySnapshot = await FirebaseFirestore.instance
+        .collection('videos')
+        .where('uid', isEqualTo: user['userId'])
+        .get();
+    videoPosts = videoQuerySnapshot.docs;
+
+    return _mergePosts(imagePosts, videoPosts);
+  }
+
+  List<DocumentSnapshot> _mergePosts(List<DocumentSnapshot> imagePosts, List<DocumentSnapshot> videoPosts) {
+    List<DocumentSnapshot> storyPosts = [];
+    storyPosts.addAll(imagePosts);
+    storyPosts.addAll(videoPosts);
+    storyPosts.sort((a, b) => b['createdAt'].compareTo(a['createdAt']));
+
+    setState(() {
+      // Uncomment if needed
+      // firstStory = storyPosts.first;
+      // _loadStory(story: firstStory, animateToPage: false);
+    });
+
+    return storyPosts;
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 31, 30, 29),
+      backgroundColor: Colors.grey[900],
       appBar: AppBar(
         backgroundColor: Colors.black,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          "NowMap",
+          "Mapping",
           style: TextStyle(color: Colors.white, fontSize: 20),
         ),
         centerTitle: true,
@@ -96,20 +134,30 @@ class _PanelWidgetState extends State<PanelWidget>  with SingleTickerProviderSta
                               itemCount: _users.length,
                               itemBuilder: (BuildContext context, int index) {
                                 var user = _users[index];
+
                                 return AspectRatio(
                                   aspectRatio: 1.6 / 2.2,
                                   child: InkWell(
-                                    onTap: () {
+                                    onTap: () async {
+                                      List<DocumentSnapshot<Object?>> storyPosts = await _getUserStories(user);
+                                      DocumentSnapshot<Object?>? firstStory = storyPosts.isNotEmpty ? storyPosts.first : null;
                                       Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                              builder: (context) => ViewStoryScreen(user: user)));
+                                        MaterialPageRoute(
+                                          builder: (context) => ViewStoryScreen(
+                                            storyPosts: storyPosts,
+                                            firstStory: firstStory!,
+                                            uid: user.get('userId'),
+                                          ),
+                                        ),
+                                      );
                                     },
                                     child: Container(
                                       margin: EdgeInsets.only(right: 10),
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(15),
                                         image: const DecorationImage(
-                                            image: NetworkImage(    'https://images.unsplash.com/photo-1554321586-92083ba0a115?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60',
+                                            image: NetworkImage(
+                                              'https://images.unsplash.com/photo-1554321586-92083ba0a115?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60',
                                             ),
                                             fit: BoxFit.cover
 

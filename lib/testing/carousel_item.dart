@@ -42,7 +42,7 @@ class _CarouselItemState extends State<CarouselItem> {
         },
         // Note that scrollable widget inside DismissiblePage might limit the functionality
         // If scroll direction matches DismissiblePage direction
-        direction: DismissiblePageDismissDirection.multi,
+        direction: DismissiblePageDismissDirection.down,
         isFullScreen: false,
         child: Padding(
           padding: const EdgeInsets.only(top:15),

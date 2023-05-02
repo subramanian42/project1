@@ -30,7 +30,7 @@ class UserSearchResultList extends StatelessWidget {
           padding: EdgeInsets.only(left: 14.0),
           child: Text('Suggestions',
             style: TextStyle(
-                color: Colors.white60,
+                color: Colors.white,
                 fontWeight: FontWeight.w600,
                 fontSize: 17),
           ),

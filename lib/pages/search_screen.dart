@@ -30,7 +30,7 @@ class _SearchScreenState extends State<SearchScreen> {
     var size = MediaQuery.of(context).size;
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Colors.black54,
+        backgroundColor: Colors.grey[900],
         appBar: AppBar(
           backgroundColor: Colors.black,
           leading: IconButton(
@@ -38,7 +38,7 @@ class _SearchScreenState extends State<SearchScreen> {
             onPressed: () {
               Navigator.of(context).pop();
             },
-            icon: Icon(
+            icon: const Icon(
               Icons.arrow_back,
               color: Colors.white,
               size: 24,
@@ -51,7 +51,7 @@ class _SearchScreenState extends State<SearchScreen> {
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontSize: 20,
               fontFamily: 'Arial',
             ),
           ),
@@ -66,7 +66,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 height: 45,
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    color: Color(0xFF262626)
+                    color: Colors.white60
                 ),
                 child: TextField(
                   onChanged: (String value) {
