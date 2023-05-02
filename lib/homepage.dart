@@ -4,6 +4,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:custom_info_window/custom_info_window.dart';
 import 'package:custom_marker/marker_icon.dart';
+import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:geoflutterfire2/geoflutterfire2.dart';
@@ -370,16 +371,22 @@ class _MyHomePageState extends State<MyHomePage> {
                               children: <Widget>[
                                 InkWell(
                                   onTap: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return CarouselItem();
-                                      },
-                                    );
+                                    // showDialog(
+                                    //   context: context,
+                                    //   builder: (BuildContext context) {
+                                    //     return CarouselItem();
+                                    //   },
+                                    // );
+                                    context.pushTransparentRoute(CarouselItem(
+                                        videoUrl: video.get('videoUrl'),
+                                      ));
                                   },
                                   child: ClipRRect(
                                     borderRadius: const BorderRadius.all(Radius.circular(10)),
-                                    child: VideoPlayer(_videoPlayerControllers[entry.key]),
+                                    child: Hero(
+                                      tag: 'video-${video.get('videoUrl')}',
+                                      child: VideoPlayer(_videoPlayerControllers[entry.key]),
+                                    ),
                                   ),
                                 ),
                                 const Align(

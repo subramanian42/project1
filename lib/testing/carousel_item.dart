@@ -1,10 +1,11 @@
+import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 class CarouselItem extends StatefulWidget {
-  // final String videoUrl;
-  //
-  // CarouselItem({required this.videoUrl});
+  final String videoUrl;
+  
+  CarouselItem({required this.videoUrl});
 
   @override
   _CarouselItemState createState() => _CarouselItemState();
@@ -16,7 +17,8 @@ class _CarouselItemState extends State<CarouselItem> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.asset('assets/videos/video_2.mp4')
+    // _controller = VideoPlayerController.asset('assets/videos/video_2.mp4')
+    _controller = VideoPlayerController.network(widget.videoUrl)
       ..initialize().then((value) {
         _controller.play();
         _controller.setLooping(true);
@@ -34,53 +36,65 @@ class _CarouselItemState extends State<CarouselItem> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black87,
-      body: Padding(
-        padding: const EdgeInsets.only(top:15),
-        child: Center(
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.97,
-            height: MediaQuery.of(context).size.height * 0.88,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(35),
-              color: Colors.grey[200],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(35),
-              child: Stack(
-                  children: <Widget>[
-                    VideoPlayer(_controller),
-                    // Black GRADIENT
-                    Container(
-                      decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-
-                              colors: <Color> [
-                                Colors.transparent,
-                                Colors.transparent,
-                                Colors.transparent,
-                                Colors.transparent,
-                                Colors.transparent,
-                                Colors.black87
-                              ]
-                          )
+      body: DismissiblePage(
+        onDismissed: () {
+          Navigator.of(context).pop();
+        },
+        // Note that scrollable widget inside DismissiblePage might limit the functionality
+        // If scroll direction matches DismissiblePage direction
+        direction: DismissiblePageDismissDirection.multi,
+        isFullScreen: false,
+        child: Padding(
+          padding: const EdgeInsets.only(top:15),
+          child: Center(
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.97,
+              height: MediaQuery.of(context).size.height * 0.88,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(35),
+                color: Colors.grey[200],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(35),
+                child: Stack(
+                    children: <Widget>[
+                      Hero(
+                        tag: 'video-${widget.videoUrl}',
+                        child: VideoPlayer(_controller),
                       ),
-                    ),
-
-                    //CONTROLS
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        _topNavBar(),
-                        _postData()
-                      ],
-                    ),
-                    Positioned(
-                      bottom: 25 , right: 1,
-                      child: _interactionButtons(),
-                    )
-                  ]
+                      // Black GRADIENT
+                      Container(
+                        decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+      
+                                colors: <Color> [
+                                  Colors.transparent,
+                                  Colors.transparent,
+                                  Colors.transparent,
+                                  Colors.transparent,
+                                  Colors.transparent,
+                                  Colors.black87
+                                ]
+                            )
+                        ),
+                      ),
+      
+                      //CONTROLS
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          _topNavBar(),
+                          _postData()
+                        ],
+                      ),
+                      Positioned(
+                        bottom: 25 , right: 1,
+                        child: _interactionButtons(),
+                      )
+                    ]
+                ),
               ),
             ),
           ),
